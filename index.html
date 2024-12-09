@@ -1,0 +1,626 @@
+<html><head><base href="/" />
+<title>Artwork Showcase Generator</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+body {
+    min-height: 100vh;
+    background: #090909;
+    color: #d6dcdc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 2rem;
+}
+
+.artwork-creator {
+    background: #111111;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid #1e1e1e;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    max-height: 600px; /* Set a max height that's slightly larger than preview */
+}
+
+@media (min-width: 768px) {
+    .artwork-creator {
+        flex-direction: row;
+        gap: 2rem;
+        align-items: stretch; /* Change from flex-start to stretch */
+    }
+    
+    .form-section {
+        flex: 1;
+        max-height: 600px; /* Match container max-height */
+    }
+    
+    .preview-section {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+}
+
+.artwork-creator h2 {
+    color: #d6dcdc;
+    margin-bottom: 1.5rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.name-title-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.name-title-row .input-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #d6dcdc;
+}
+
+input[type="text"], input[type="file"], input[type="color"], input[type="range"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #1e1e1e;
+    background: #111111;
+    color: #d6dcdc;
+    border-radius: 8px;
+}
+
+.custom-file-input {
+    display: none;
+}
+
+.file-upload-btn {
+    display: inline-block;
+    background: #d6dcdc;
+    color: #090909;
+    border: 1px solid #1e1e1e;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+    width: 100%;
+}
+
+.file-upload-btn:hover {
+    background: #b8bebe;
+}
+
+input[type="color"] {
+    height: 50px;
+    padding: 0;
+    background: #111111;
+    border: 1px solid #1e1e1e;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
+
+.preview-container {
+    margin-top: 0; /* Remove top margin since container is now fixed height */
+    position: relative;
+    width: 100%;
+    height: 500px;
+    border-radius: 8px;
+    border: 1px solid #1e1e1e;
+    overflow: hidden;
+    display: none;
+    /* Add this to ensure background coverage */
+    background-size: cover;
+    background-position: center;
+    transform-style: preserve-3d; /* Update existing properties */
+    perspective: 1000px; /* Update existing properties */
+}
+
+.artwork-preview {
+    width: auto;
+    height: 70%;
+    object-fit: contain;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    transition: all 0.3s ease;
+    border-radius: 12px; /* Increased rounded borders */
+    z-index: 1;
+    /* Add a base box-shadow for additional darkness */
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    transform-style: preserve-3d; /* Update existing properties */
+    backface-visibility: hidden; /* Update existing properties */
+}
+
+img {
+    filter: drop-shadow(rgba(0, 0, 0, 0.8) 9.45px 8.1px 5px); /* Reversed signs on x and y values */
+    transform: translate(-50%, -50%) rotateX(-5.25deg) rotateY(6.3deg);
+}
+
+.blurred-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(20px) brightness(0.7);
+    transform: scale(1.1); /* Add slight scale to prevent blur edges from showing */
+    z-index: 0;
+    display: none; /* Hide by default */
+}
+
+.artwork-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem;
+    z-index: 1;
+}
+
+.artwork-info h3, .artwork-info p {
+    color: #d6dcdc;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.btn {
+    background: #d6dcdc;
+    color: #090909;
+    border: 1px solid #1e1e1e;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%; /* Add this line */
+}
+
+.btn:hover {
+    background: #b8bebe;
+}
+
+#screenshotBtn {
+    margin-top: 1rem;
+    display: none;
+}
+
+.color-inputs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.color-inputs input[type="color"] {
+    flex: 1;
+}
+
+.transform-controls-row {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.mod-grid-container {
+    flex: 1;
+}
+
+.shadow-control {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.shadow-control label {
+    margin-bottom: 0;
+}
+
+/* Update modulation grid size to be more compact */
+.modulation-grid {
+    width: 200px;
+    height: 200px;
+    border: 1px solid #1e1e1e;
+    border-radius: 8px;
+    position: relative;
+    background: #090909;
+    touch-action: none;
+    overflow: hidden; /* Add this line */
+}
+
+.grid-handle {
+    width: 15px;
+    height: 15px;
+    background: #d6dcdc;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    touch-action: none;
+    opacity: .5;
+    transition: opacity .2s ease-in-out;
+}
+
+.grid-handle:hover {
+opacity: 1;
+}
+
+.grid-coordinates {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: #d6dcdc;
+}
+
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.toggle-switch input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-switch label {
+    margin-bottom: 0;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.switch::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #d6dcdc;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+}
+
+.toggle-switch input[type="checkbox"]:checked + .switch::after {
+    transform: translateX(26px);
+}
+
+.toggle-switch input[type="checkbox"]:checked + .switch {
+    background-color: #444;
+}
+
+/* Remove outline on focus for all elements */
+*:focus {
+    outline: none;
+}
+
+/* Add subtle focus styles for accessibility on interactive elements */
+input:focus, button:focus {
+    box-shadow: 0 0 0 2px rgba(214, 220, 220, 0.3);
+}
+
+/* Add styles for the scrollbar to match the dark theme */
+.form-section::-webkit-scrollbar {
+    width: 8px;
+}
+
+.form-section::-webkit-scrollbar-track {
+    background: #111111;
+    border-radius: 4px;
+}
+
+.form-section::-webkit-scrollbar-thumb {
+    background: #1e1e1e;
+    border-radius: 4px;
+}
+
+.form-section::-webkit-scrollbar-thumb:hover {
+    background: #2e2e2e;
+}
+
+.form-section {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 1rem; /* Add some padding for the scrollbar */
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="artwork-creator">
+        <div class="form-section">
+            <div class="input-group">
+                <input type="file" id="artworkFile" class="custom-file-input" accept="image/png, image/jpeg">
+                <label for="artworkFile" class="file-upload-btn">Add Art</label>
+            </div>
+            <div class="name-title-row">
+                <div class="input-group">
+                    <label for="artistName">Artist Name</label>
+                    <input type="text" id="artistName" placeholder="Enter artist name">
+                </div>
+                <div class="input-group">
+                    <label for="songTitle">Song Title</label>
+                    <input type="text" id="songTitle" placeholder="Enter song title">
+                </div>
+            </div>
+            <div class="input-group">
+                <div class="toggle-switch">
+                    <input type="checkbox" id="backgroundToggle">
+                    <label class="switch" for="backgroundToggle"></label>
+                    <label for="backgroundToggle">Image As Background</label>
+                </div>
+                <label>Background Gradient Colors</label>
+                <div class="color-inputs">
+                    <input type="color" id="gradientColor1" value="#1a1a1a">
+                    <input type="color" id="gradientColor2" value="#2c2c2c">
+                </div>
+            </div>
+            <div class="input-group transform-controls">
+                <div class="transform-controls-row">
+                    <div class="mod-grid-container">
+                        <div class="modulation-grid" id="modulationGrid">
+                            <div class="grid-handle" id="gridHandle"></div>
+                        </div>
+                        <div class="grid-coordinates" id="gridCoordinates">X: 0, Y: 0</div>
+                    </div>
+                    <div class="shadow-control">
+                        <label for="shadowIntensity">Shadow Intensity</label>
+                        <input type="range" id="shadowIntensity" min="0" max="100" value="20">
+                    </div>
+                </div>
+            </div>
+            <button class="btn" id="screenshotBtn">Download Showcase</button>
+        </div>
+        <div class="preview-section">
+            <div class="preview-container" id="previewContainer">
+                <img class="blurred-background" id="blurredBackground">
+                <img class="artwork-preview" id="artworkPreview">
+                <div class="artwork-info">
+                    <h3 id="previewTitle"></h3>
+                    <p id="previewArtist"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('artworkFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('artworkPreview').src = e.target.result;
+            document.getElementById('blurredBackground').src = e.target.result;
+            document.getElementById('previewContainer').style.display = 'block';
+            document.getElementById('screenshotBtn').style.display = 'block';
+            updatePreviewInfo();
+            updateBackground(); // Update background based on current toggle state
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+document.getElementById('backgroundToggle').addEventListener('change', updateBackground);
+document.getElementById('artistName').addEventListener('input', updatePreviewInfo);
+document.getElementById('songTitle').addEventListener('input', updatePreviewInfo);
+document.getElementById('gradientColor1').addEventListener('input', updateBackground);
+document.getElementById('gradientColor2').addEventListener('input', updateBackground);
+document.getElementById('shadowIntensity').addEventListener('input', updateShadow);
+
+const modulationGrid = document.getElementById('modulationGrid');
+const gridHandle = document.getElementById('gridHandle');
+const gridCoordinates = document.getElementById('gridCoordinates');
+
+let isDragging = false;
+
+// Mouse down handler to enable dragging
+modulationGrid.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    handleGridInteraction(e);
+});
+
+// Mouse move handler for continuous updates while dragging
+document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+        handleGridInteraction(e);
+    }
+});
+
+// Mouse up handler to disable dragging
+document.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+// Touch support for mobile devices
+modulationGrid.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    handleGridInteraction(e.touches[0]);
+    e.preventDefault(); // Prevent scrolling while dragging
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (isDragging) {
+        handleGridInteraction(e.touches[0]);
+        e.preventDefault();
+    }
+});
+
+document.addEventListener('touchend', () => {
+    isDragging = false;
+});
+
+// Replace handleGridClick with handleGridInteraction
+function handleGridInteraction(e) {
+    // Get grid boundaries
+    const rect = modulationGrid.getBoundingClientRect();
+    
+    // Calculate position relative to grid
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    // Constrain coordinates to grid boundaries
+    const constrainedX = Math.max(0, Math.min(x, rect.width));
+    const constrainedY = Math.max(0, Math.min(y, rect.height));
+
+    // Update handle position
+    gridHandle.style.left = constrainedX + 'px';
+    gridHandle.style.top = constrainedY + 'px';
+
+    // Calculate and apply rotations
+    const rotateX = ((constrainedY / rect.height) * 60) - 30;
+    const rotateY = ((constrainedX / rect.width) * 60) - 30;
+
+    // Update coordinate display
+    gridCoordinates.textContent = `X: ${Math.round(rotateX)}, Y: ${Math.round(rotateY)}`;
+
+    // Apply transformations to artwork
+    const artwork = document.getElementById('artworkPreview');
+    artwork.style.transform = `translate(-50%, -50%) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    
+    // Calculate and apply shadow in opposite direction
+    const shadowX = -rotateY * 1.5;
+    const shadowY = rotateX * 1.5;
+    const intensity = document.getElementById('shadowIntensity').value;
+    artwork.style.filter = `drop-shadow(${shadowX}px ${shadowY}px ${intensity}px rgba(0,0,0,0.8))`;
+}
+
+function updatePreviewInfo() {
+    const artistName = document.getElementById('artistName').value;
+    const songTitle = document.getElementById('songTitle').value;
+    document.getElementById('previewTitle').textContent = songTitle;
+    document.getElementById('previewArtist').textContent = artistName;
+}
+
+function updateBackground() {
+    const useBlurredBg = document.getElementById('backgroundToggle').checked;
+    const container = document.getElementById('previewContainer');
+    const blurredBg = document.getElementById('blurredBackground');
+    
+    if (useBlurredBg && blurredBg.src) {
+        container.style.background = 'none';
+        blurredBg.style.display = 'block';
+    } else {
+        const color1 = document.getElementById('gradientColor1').value;
+        const color2 = document.getElementById('gradientColor2').value;
+        container.style.background = `linear-gradient(45deg, ${color1}, ${color2})`;
+        blurredBg.style.display = 'none';
+    }
+}
+
+function updateShadow() {
+    const intensity = document.getElementById('shadowIntensity').value;
+    const artwork = document.getElementById('artworkPreview');
+    const handle = document.getElementById('gridHandle');
+    const rect = document.getElementById('modulationGrid').getBoundingClientRect();
+    
+    // Calculate current rotation from handle position
+    const x = parseInt(handle.style.left) || rect.width/2;
+    const y = parseInt(handle.style.top) || rect.height/2;
+    const rotateX = ((y / rect.height) * 60) - 30;
+    const rotateY = ((x / rect.width) * 60) - 30;
+    
+    // Calculate shadow offset based on current rotation
+    const shadowX = -rotateY * 1.5;
+    const shadowY = rotateX * 1.5;
+    
+    // Apply shadow with current intensity
+    artwork.style.filter = `drop-shadow(${shadowX}px ${shadowY}px ${intensity}px rgba(0,0,0,0.8))`;
+}
+
+document.getElementById('screenshotBtn').addEventListener('click', function() {
+    const container = document.getElementById('previewContainer');
+    const artwork = document.getElementById('artworkPreview');
+    
+    // Get current transform and shadow values
+    const handle = document.getElementById('gridHandle');
+    const rect = document.getElementById('modulationGrid').getBoundingClientRect();
+    
+    const x = parseInt(handle.style.left) || rect.width/2;
+    const y = parseInt(handle.style.top) || rect.height/2;
+    const rotateX = ((y / rect.height) * 60) - 30;
+    const rotateY = ((x / rect.width) * 60) - 30;
+    
+    const shadowX = -rotateY * 1.5;
+    const shadowY = rotateX * 1.5;
+    const shadowIntensity = document.getElementById('shadowIntensity').value;
+    
+    // Store original filter
+    const originalFilter = artwork.style.filter;
+    
+    // Convert drop-shadow filter to box-shadow for better rendering
+    artwork.style.boxShadow = `${shadowX}px ${shadowY}px ${shadowIntensity}px rgba(0,0,0,0.8)`;
+    artwork.style.filter = 'none';
+    
+    // Use html-to-image instead of html2canvas
+    htmlToImage.toPng(container, {
+        quality: 1.0,
+        backgroundColor: null,
+        pixelRatio: 3
+    })
+    .then(function(dataUrl) {
+        // Create download link
+        const link = document.createElement('a');
+        link.download = 'artwork-showcase.png';
+        link.href = dataUrl;
+        link.click();
+        
+        // Restore original styles
+        artwork.style.filter = originalFilter;
+        artwork.style.boxShadow = 'none';
+    })
+    .catch(function(error) {
+        console.error('Screenshot failed:', error);
+        // Restore original styles on error
+        artwork.style.filter = originalFilter;
+        artwork.style.boxShadow = 'none';
+    });
+});
+
+// Initialize default styles
+updateBackground();
+updateShadow();
+</script>
+</body></html>
